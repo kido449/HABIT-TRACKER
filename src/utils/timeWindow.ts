@@ -3,11 +3,8 @@ import { Habit, TaskTimeStatus } from '../types/tracker';
 export interface ScheduleDetails {
   startTimeStr: string;
   endTimeStr: string;
-  graceEndStr: string;
   windowStr: string;
-  startMinutes: number;
-  endMinutes: number;
-  graceEndMinutes: number;
+  durationMinutes: number;
 }
 
 export interface DayStatusResult {
@@ -15,105 +12,142 @@ export interface DayStatusResult {
   canCheckIn: boolean;
   label: string;
   sublabel?: string;
-  minutesRemaining?: number;
-  secondsRemaining?: number;
 }
 
 /**
- * Converts 24h string ("09:30") to 12h formatted string ("9:30 AM")
+ * Strict 12-hour device clock formatter:
+ * Outputs e.g. "01:15 PM" or "01:15:30 PM"
  */
-export function formatTime24to12(time24: string): string {
-  if (!time24) return '';
-  const parts = time24.split(':');
-  if (parts.length < 2) return time24;
-  let h = parseInt(parts[0], 10) || 0;
-  const m = parseInt(parts[1], 10) || 0;
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12;
+export function formatDeviceClock12h(date: Date, includeSeconds = false): string {
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  if (includeSeconds) {
+    const seconds = date.getSeconds();
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)} ${ampm}`;
+  }
+  return `${pad(hours)}:${pad(minutes)} ${ampm}`;
+}
+
+/**
+ * Formats any hours and minutes into strict 12-hour string (e.g. "02:00 PM", "12:15 AM")
+ */
+export function format12HourTime(hour12: number, minute: number, ampm: 'AM' | 'PM'): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  let h = hour12 % 12;
   if (h === 0) h = 12;
-  const mFormatted = m < 10 ? `0${m}` : `${m}`;
-  return `${h}:${mFormatted} ${ampm}`;
+  return `${pad(h)}:${pad(minute)} ${ampm}`;
 }
 
 /**
- * Converts 12h string ("9:30 AM") to 24h string ("09:30")
+ * Parses time string (e.g. "02:00 PM", "2:00pm", "14:00") into { hour12, minute, ampm }
  */
-export function formatTime12to24(time12: string): string {
-  if (!time12) return '09:00';
-  if (!time12.includes('AM') && !time12.includes('PM')) {
-    return time12;
+export function parse12HourTime(timeStr: string): { hour12: number; minute: number; ampm: 'AM' | 'PM' } {
+  if (!timeStr) return { hour12: 2, minute: 0, ampm: 'PM' };
+  
+  const isPM = /pm/i.test(timeStr);
+  const isAM = /am/i.test(timeStr);
+  const clean = timeStr.replace(/[a-zA-Z]/g, '').trim();
+  const [hStr, mStr] = clean.split(':');
+  let h = parseInt(hStr, 10) || 0;
+  const m = parseInt(mStr, 10) || 0;
+
+  if (isPM || isAM) {
+    let hour12 = h % 12;
+    if (hour12 === 0) hour12 = 12;
+    return { hour12, minute: m, ampm: isPM ? 'PM' : 'AM' };
   }
-  const isPM = time12.toUpperCase().includes('PM');
-  const clean = time12.replace(/(AM|PM)/gi, '').trim();
-  const parts = clean.split(':');
-  let h = parseInt(parts[0], 10) || 0;
-  const m = parseInt(parts[1], 10) || 0;
-  if (isPM && h < 12) h += 12;
-  if (!isPM && h === 12) h = 0;
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+
+  // 24-hour fallback
+  const ampm: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
+  let hour12 = h % 12;
+  if (hour12 === 0) hour12 = 12;
+  return { hour12, minute: m, ampm };
 }
 
 /**
- * Parses time string (either 12h or 24h) into total minutes from midnight (0..1439).
+ * Accurately calculates exact End Time and Time Window from Start Time and Duration.
+ * Handles AM/PM rollover across noon (e.g., 11:30 AM + 45m = 12:15 PM)
+ * and midnight (e.g., 11:45 PM + 30m = 12:15 AM).
  */
-export function parseTimeToMinutes(timeStr: string): number {
-  if (!timeStr) return 0;
-  if (timeStr.includes('AM') || timeStr.includes('PM')) {
-    const isPM = timeStr.toUpperCase().includes('PM');
-    const clean = timeStr.replace(/(AM|PM)/gi, '').trim();
-    const parts = clean.split(':');
-    let h = (parseInt(parts[0], 10) || 0) % 12;
-    if (isPM) h += 12;
-    const m = parseInt(parts[1], 10) || 0;
-    return h * 60 + m;
-  }
-  const parts = timeStr.split(':');
-  const h = parseInt(parts[0], 10) || 0;
-  const m = parseInt(parts[1], 10) || 0;
-  return h * 60 + m;
+export function calculateScheduleFromDuration(
+  startHour12: number,
+  startMinute: number,
+  startAmPm: 'AM' | 'PM',
+  durationMinutes: number
+): {
+  startTimeStr: string;
+  endTimeStr: string;
+  timeWindow: string;
+  endHour12: number;
+  endMinute: number;
+  endAmPm: 'AM' | 'PM';
+} {
+  // Convert start time to 24-hour total minutes from midnight
+  let startH24 = startHour12 % 12;
+  if (startAmPm === 'PM') startH24 += 12;
+  const startTotalMinutes = startH24 * 60 + startMinute;
+
+  // Compute end time in minutes with 24-hour modulo for rollover
+  const safeDuration = Math.max(1, Math.round(durationMinutes));
+  const endTotalMinutes = ((startTotalMinutes + safeDuration) % 1440 + 1440) % 1440;
+
+  // Convert end time back to 12-hour format with AM/PM
+  const endH24 = Math.floor(endTotalMinutes / 60);
+  const endMinute = endTotalMinutes % 60;
+  const endAmPm: 'AM' | 'PM' = endH24 >= 12 ? 'PM' : 'AM';
+  let endHour12 = endH24 % 12;
+  if (endHour12 === 0) endHour12 = 12;
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  let cleanStartH = startHour12 % 12;
+  if (cleanStartH === 0) cleanStartH = 12;
+
+  const startTimeStr = `${pad(cleanStartH)}:${pad(startMinute)} ${startAmPm}`;
+  const endTimeStr = `${pad(endHour12)}:${pad(endMinute)} ${endAmPm}`;
+  const timeWindow = `${startTimeStr} - ${endTimeStr}`;
+
+  return {
+    startTimeStr,
+    endTimeStr,
+    timeWindow,
+    endHour12,
+    endMinute,
+    endAmPm,
+  };
 }
 
 /**
- * Returns formatted time range string: e.g. "06:00 AM – 07:30 AM"
+ * Formats time string strictly into 12-hour format "hh:mm AM/PM"
+ */
+export function formatTo12hStrict(timeStr: string): string {
+  if (!timeStr) return '';
+  const parsed = parse12HourTime(timeStr);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(parsed.hour12)}:${pad(parsed.minute)} ${parsed.ampm}`;
+}
+
+/**
+ * Returns formatted time range string: e.g. "02:00 PM - 03:30 PM"
  */
 export function getHabitTimeRange(habit: Habit): string {
   if (habit.startTime && habit.endTime) {
-    const s = habit.startTime.includes('M') ? habit.startTime : formatTime24to12(habit.startTime);
-    const e = habit.endTime.includes('M') ? habit.endTime : formatTime24to12(habit.endTime);
-    return `${s} – ${e}`;
+    return `${formatTo12hStrict(habit.startTime)} - ${formatTo12hStrict(habit.endTime)}`;
   }
-  if (habit.startTime) {
-    const s = habit.startTime.includes('M') ? habit.startTime : formatTime24to12(habit.startTime);
-    return s;
+  if (habit.time) {
+    // Check if habit.time already contains range
+    if (habit.time.includes('-') || habit.time.includes('–')) {
+      const parts = habit.time.split(/[-–]/);
+      if (parts.length === 2) {
+        return `${formatTo12hStrict(parts[0].trim())} - ${formatTo12hStrict(parts[1].trim())}`;
+      }
+    }
+    return formatTo12hStrict(habit.time);
   }
-  if (habit.time) return habit.time;
   return '';
-}
-
-/**
- * Converts 12-hour hour, minute and AM/PM into total minutes from midnight (0..1439).
- */
-export function toMinutesFromMidnight(hour12: number, minute: number, ampm: 'AM' | 'PM'): number {
-  let h = hour12 % 12;
-  if (ampm === 'PM') {
-    h += 12;
-  }
-  return h * 60 + minute;
-}
-
-/**
- * Formats total minutes from midnight into 12-hour string (e.g., "04:00 AM", "05:15 PM").
- */
-export function formatMinutesTo12h(totalMinutes: number): string {
-  const normalized = ((totalMinutes % 1440) + 1440) % 1440;
-  const hours24 = Math.floor(normalized / 60);
-  const mins = normalized % 60;
-  const ampm = hours24 >= 12 ? 'PM' : 'AM';
-  let hours12 = hours24 % 12;
-  if (hours12 === 0) hours12 = 12;
-  const hStr = hours12 < 10 ? `0${hours12}` : `${hours12}`;
-  const mStr = mins < 10 ? `0${mins}` : `${mins}`;
-  return `${hStr}:${mStr} ${ampm}`;
 }
 
 /**
@@ -121,44 +155,32 @@ export function formatMinutesTo12h(totalMinutes: number): string {
  */
 export function getHabitScheduleDetails(habit: Habit): ScheduleDetails {
   if (habit.startTime && habit.endTime) {
-    const startMinutes = parseTimeToMinutes(habit.startTime);
-    const endMinutes = parseTimeToMinutes(habit.endTime);
-    const startTimeStr = formatMinutesTo12h(startMinutes);
-    const endTimeStr = formatMinutesTo12h(endMinutes);
+    const s = formatTo12hStrict(habit.startTime);
+    const e = formatTo12hStrict(habit.endTime);
     return {
-      startTimeStr,
-      endTimeStr,
-      graceEndStr: endTimeStr,
-      windowStr: `${startTimeStr} – ${endTimeStr}`,
-      startMinutes,
-      endMinutes,
-      graceEndMinutes: endMinutes,
+      startTimeStr: s,
+      endTimeStr: e,
+      windowStr: `${s} - ${e}`,
+      durationMinutes: habit.durationMinutes || 60,
     };
   }
 
-  const startHour = habit.startHour || 5;
-  const startMinute = habit.startMinute || 0;
-  const startAmPm = habit.startAmPm || 'AM';
-  const duration = habit.durationMinutes || 60;
-  const grace = habit.graceMinutes || 15;
-
-  const startMinutes = toMinutesFromMidnight(startHour, startMinute, startAmPm);
-  const endMinutes = startMinutes + duration;
-  const graceEndMinutes = endMinutes + grace;
-
-  const startTimeStr = formatMinutesTo12h(startMinutes);
-  const endTimeStr = formatMinutesTo12h(endMinutes);
-  const graceEndStr = formatMinutesTo12h(graceEndMinutes);
-  const windowStr = `${endTimeStr} - ${graceEndStr}`;
+  if (habit.time) {
+    const timeWindow = getHabitTimeRange(habit);
+    const parts = timeWindow.split(' - ');
+    return {
+      startTimeStr: parts[0] || '07:00 AM',
+      endTimeStr: parts[1] || '08:00 AM',
+      windowStr: timeWindow,
+      durationMinutes: habit.durationMinutes || 60,
+    };
+  }
 
   return {
-    startTimeStr,
-    endTimeStr,
-    graceEndStr,
-    windowStr,
-    startMinutes,
-    endMinutes,
-    graceEndMinutes,
+    startTimeStr: '07:00 AM',
+    endTimeStr: '08:00 AM',
+    windowStr: '07:00 AM - 08:00 AM',
+    durationMinutes: 60,
   };
 }
 
@@ -167,11 +189,11 @@ export function getHabitScheduleDetails(habit: Habit): ScheduleDetails {
  */
 export function getHabitDayStatus(
   habit: Habit,
-  dayNumber: number,
-  year: number,
-  month: number,
+  _dayNumber: number,
+  _year: number,
+  _month: number,
   isChecked: boolean,
-  currentTime: Date
+  _currentTime: Date
 ): DayStatusResult {
   if (isChecked) {
     return {

@@ -31,7 +31,8 @@ import { AddHabitModal } from './components/AddHabitModal';
 import { ManageTasksModal } from './components/ManageTasksModal';
 import { ConfirmModal } from './components/ConfirmModal';
 import { InstallAppModal } from './components/InstallAppModal';
-import { ShieldCheck, CheckCircle2, Sun, Moon, Download, Smartphone } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Sun, Moon, Download, Smartphone, Clock, Plus } from 'lucide-react';
+import { formatDeviceClock12h } from './utils/timeWindow';
 
 export default function App() {
   const { theme, toggleTheme } = useTheme();
@@ -474,6 +475,63 @@ export default function App() {
           )}
         </div>
       )}
+
+      {/* Prominent Live Device Clock & Top Dashboard Bar */}
+      <header className={`border-b px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md transition-colors ${
+        isDark ? 'bg-[#09090b]/90 border-neutral-800' : 'bg-white/90 border-slate-200 shadow-2xs'
+      }`}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse ring-4 ring-emerald-500/20" />
+          <span className="font-extrabold text-sm tracking-tight flex items-center gap-2">
+            <span>HaBity</span>
+            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md border uppercase font-bold ${
+              isDark ? 'border-neutral-700 bg-neutral-800/80 text-neutral-300' : 'border-slate-300 bg-slate-100 text-slate-700'
+            }`}>
+              Live Tracker OS
+            </span>
+          </span>
+        </div>
+
+        {/* Live Device Clock: Strictly 12-hour format with AM/PM (e.g., "01:15 PM") */}
+        <div className="flex items-center gap-3">
+          <div
+            title="Real-time device clock (12-hour format)"
+            className={`px-3.5 py-1.5 rounded-xl border flex items-center gap-2.5 shadow-sm font-mono transition-all ${
+              isDark 
+                ? 'bg-[#121215] border-emerald-500/30 text-white' 
+                : 'bg-emerald-50/70 border-emerald-200 text-slate-900 shadow-2xs'
+            }`}
+          >
+            <Clock className="w-4 h-4 text-emerald-500 animate-spin" style={{ animationDuration: '60s' }} />
+            <div className="flex items-baseline gap-1.5">
+              <span className={`text-[11px] font-sans font-medium hidden sm:inline ${
+                isDark ? 'text-neutral-400' : 'text-slate-500'
+              }`}>
+                Live Clock:
+              </span>
+              <span className="text-sm md:text-base font-extrabold tracking-tight text-emerald-500">
+                {formatDeviceClock12h(currentTime)}
+              </span>
+            </div>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+          </div>
+
+          <button
+            onClick={() => {
+              setEditingHabit(null);
+              setIsModalOpen(true);
+            }}
+            className={`flex items-center gap-1.5 py-1.5 px-3.5 rounded-xl font-bold text-xs tracking-tight transition-all active:scale-[0.98] shadow-sm cursor-pointer ${
+              isDark
+                ? 'bg-emerald-400 hover:bg-emerald-300 text-neutral-950 font-black'
+                : 'bg-slate-900 hover:bg-slate-800 text-white'
+            }`}
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span className="hidden sm:inline">Add Task</span>
+          </button>
+        </div>
+      </header>
 
       {/* Main Container */}
       <main className="flex-1 max-w-[1680px] w-full mx-auto p-4 md:p-6 lg:p-8 space-y-6">

@@ -12,8 +12,10 @@ import {
   Sun,
   Moon,
   Smartphone,
-  Sparkles
+  Sparkles,
+  Clock
 } from 'lucide-react';
+import { formatDeviceClock12h } from '../utils/timeWindow';
 
 interface HeaderPanelProps {
   year: number;
@@ -121,13 +123,13 @@ export const HeaderPanel: React.FC<HeaderPanelProps> = ({
                   HaBity
                 </h1>
                 {currentTime && (
-                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border flex items-center gap-1.5 shadow-2xs ${
+                  <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5 shadow-2xs ${
                     isDark 
-                      ? 'bg-neutral-900/90 border-neutral-700/80 text-emerald-400' 
+                      ? 'bg-neutral-900/90 border-emerald-500/30 text-emerald-400' 
                       : 'bg-emerald-50 border-emerald-200 text-emerald-800'
                   }`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>{formatDeviceClock12h(currentTime)}</span>
                   </span>
                 )}
               </div>

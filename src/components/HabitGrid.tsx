@@ -2,7 +2,7 @@ import React from 'react';
 import { Habit, DayInfo, WeekGroup, MonthHabitRecord, HabitAnalytics } from '../types/tracker';
 import { useTheme } from '../context/ThemeContext';
 import { Check, Plus, Edit2, Trash2, ListFilter, Clock } from 'lucide-react';
-import { getHabitTimeRange } from '../utils/timeWindow';
+import { getHabitTimeRange, formatDeviceClock12h } from '../utils/timeWindow';
 
 interface HabitGridProps {
   habits: Habit[];
@@ -26,6 +26,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({
   weekGroups,
   records,
   analytics,
+  currentTime,
   onToggleDay,
   onOpenAddModal,
   onOpenEditModal,
@@ -66,6 +67,13 @@ export const HabitGrid: React.FC<HabitGridProps> = ({
           <span className={`text-xs font-mono ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
             Click any day box to toggle completion
           </span>
+          <span className={isDark ? 'text-neutral-600' : 'text-slate-300'}>|</span>
+          <div className={`flex items-center gap-1.5 text-xs font-mono font-bold px-2 py-0.5 rounded-md border ${
+            isDark ? 'bg-neutral-900 border-neutral-700/80 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+          }`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Clock: {formatDeviceClock12h(currentTime)}</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

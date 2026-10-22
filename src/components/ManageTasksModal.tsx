@@ -13,7 +13,7 @@ import {
   ListFilter,
   Clock
 } from 'lucide-react';
-import { getHabitScheduleDetails } from '../utils/timeWindow';
+import { getHabitScheduleDetails, getHabitTimeRange } from '../utils/timeWindow';
 
 interface ManageTasksModalProps {
   isOpen: boolean;
@@ -220,7 +220,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
                         }`}>
                           <Clock className="w-3 h-3 text-emerald-400" />
                           <span className="text-emerald-400 font-semibold">
-                            {schedule.startTimeStr} &rarr; {schedule.endTimeStr}
+                            {getHabitTimeRange(habit) || `${schedule.startTimeStr} - ${schedule.endTimeStr}`}
                           </span>
                         </div>
                       </div>

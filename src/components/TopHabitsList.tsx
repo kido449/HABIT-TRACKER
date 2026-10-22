@@ -1,7 +1,8 @@
 import React from 'react';
 import { HabitAnalytics } from '../types/tracker';
 import { useTheme } from '../context/ThemeContext';
-import { Trophy, Flame, Sparkles } from 'lucide-react';
+import { Trophy, Flame, Sparkles, Clock } from 'lucide-react';
+import { getHabitTimeRange } from '../utils/timeWindow';
 
 interface TopHabitsListProps {
   analytics: HabitAnalytics[];
@@ -140,12 +141,19 @@ export const TopHabitsList: React.FC<TopHabitsListProps> = ({ analytics }) => {
                       </span>
                     )}
                   </div>
-                  <div className={`flex items-center gap-2 text-[10px] font-mono mt-0.5 ${
+                  <div className={`flex items-center gap-2 text-[10px] font-mono mt-0.5 flex-wrap ${
                     isDark ? 'text-neutral-400' : 'text-slate-500'
                   }`}>
-                    <span>{item.actual} of {item.goal} days completed</span>
-                    <span>&bull;</span>
-                    <span>{item.habit.time}</span>
+                    <span>{item.actual} of {item.goal} days</span>
+                    {getHabitTimeRange(item.habit) && (
+                      <>
+                        <span>&bull;</span>
+                        <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                          <Clock className="w-2.5 h-2.5" />
+                          {getHabitTimeRange(item.habit)}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
