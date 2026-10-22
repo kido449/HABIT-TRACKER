@@ -11,9 +11,7 @@ import {
   Plus, 
   RotateCcw,
   ListFilter,
-  Clock,
-  Timer,
-  ShieldAlert
+  Clock
 } from 'lucide-react';
 import { getHabitScheduleDetails } from '../utils/timeWindow';
 
@@ -217,22 +215,12 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
                         }`}>
                           {habit.name}
                         </span>
-                        <div className={`flex flex-wrap items-center gap-2 text-[11px] font-mono mt-0.5 ${
+                        <div className={`flex items-center gap-1.5 text-[11px] font-mono mt-0.5 ${
                           isDark ? 'text-neutral-400' : 'text-slate-500'
                         }`}>
-                          <span className="flex items-center gap-1 text-emerald-400">
-                            <Clock className="w-3 h-3 text-neutral-400" />
+                          <Clock className="w-3 h-3 text-emerald-400" />
+                          <span className="text-emerald-400 font-semibold">
                             {schedule.startTimeStr} &rarr; {schedule.endTimeStr}
-                          </span>
-                          <span>&bull;</span>
-                          <span className="flex items-center gap-1">
-                            <Timer className="w-3 h-3 text-neutral-400" />
-                            {habit.durationMinutes || 60}m
-                          </span>
-                          <span>&bull;</span>
-                          <span className="flex items-center gap-1 text-amber-400/90">
-                            <ShieldAlert className="w-3 h-3 text-amber-400" />
-                            Window: {schedule.windowStr}
                           </span>
                         </div>
                       </div>
@@ -247,7 +235,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
                       onClose();
                       onEditHabit(habit);
                     }}
-                    title="Edit clock time, duration, color, and grace window"
+                    title="Edit habit name, schedule, and color"
                     className={`p-2 rounded-lg border text-xs flex items-center gap-1 transition-colors cursor-pointer ${
                       isDark 
                         ? 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 text-neutral-300 hover:text-white' 

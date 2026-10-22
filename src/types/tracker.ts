@@ -1,16 +1,18 @@
 export interface Habit {
   id: string;
   name: string;
-  time: string; // e.g., "04:00 AM"
-  duration: string; // e.g., "60 mins"
-  startHour: number; // 1 to 12
-  startMinute: number; // 0, 15, 30, 45, etc.
-  startAmPm: 'AM' | 'PM';
-  durationMinutes: number; // 30, 60, 90, 120, etc.
-  graceMinutes: number; // e.g. 15 minutes window after task end time to check in
   color: string; // Hex color e.g. "#10b981", "#3b82f6"
-  avatar?: string; // Optional legacy avatar for backwards compatibility
-  category?: string; // e.g., "Health", "Fitness", "Deep Work"
+  startTime?: string; // e.g. "06:00 AM" or "06:00"
+  endTime?: string; // e.g. "07:30 AM" or "07:30"
+  time?: string; // Display time string e.g., "06:00 AM – 07:30 AM"
+  duration?: string; // Optional legacy duration string
+  startHour?: number;
+  startMinute?: number;
+  startAmPm?: 'AM' | 'PM';
+  durationMinutes?: number;
+  graceMinutes?: number;
+  avatar?: string;
+  category?: string;
   createdAt: number;
 }
 
