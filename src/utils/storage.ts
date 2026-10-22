@@ -1,5 +1,11 @@
 import { Habit, MonthHabitRecord, MonthWellnessRecord } from '../types/tracker';
 
+export const DEFAULT_HABIT_COLORS = [
+  '#10b981', '#06b6d4', '#3b82f6', '#6366f1',
+  '#8b5cf6', '#ec4899', '#f43f5e', '#f97316',
+  '#f59e0b', '#eab308', '#84cc16', '#14b8a6',
+];
+
 // Empty default habits as requested by user
 export const DEFAULT_HABITS: Habit[] = [];
 
@@ -25,7 +31,10 @@ export function loadHabits(): Habit[] {
     if (raw !== null) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed;
+        return parsed.map((h: any, idx: number) => ({
+          ...h,
+          color: h.color || DEFAULT_HABIT_COLORS[idx % DEFAULT_HABIT_COLORS.length],
+        }));
       }
     }
   } catch (err) {

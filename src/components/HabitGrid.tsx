@@ -205,7 +205,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({
                 <div className={`text-[10px] font-mono normal-case tracking-normal ${
                   isDark ? 'text-neutral-400' : 'text-slate-500'
                 }`}>
-                  Avatar &bull; Schedule &bull; 15m Tick Window
+                  Color &bull; Schedule &bull; Grace Window
                 </div>
               </th>
 
@@ -376,14 +376,15 @@ export const HabitGrid: React.FC<HabitGridProps> = ({
                       : 'bg-white group-hover:bg-slate-50 border-slate-200'
                   }`}>
                     <div className="flex items-center justify-between gap-2.5">
-                      {/* Avatar Badge */}
+                      {/* Color Tag Badge */}
                       <button
                         type="button"
                         onClick={() => onOpenEditModal(habit)}
                         title="Click to edit task"
-                        className="text-xl w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-neutral-500/10 border border-neutral-500/20 hover:scale-105 transition-transform cursor-pointer"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm border border-white/20 hover:scale-105 transition-transform cursor-pointer"
+                        style={{ backgroundColor: habit.color || '#10b981' }}
                       >
-                        {habit.avatar || '🎯'}
+                        <span className="w-2.5 h-2.5 rounded-full bg-white/90 shadow-xs" />
                       </button>
 
                       <div className="min-w-0 flex-1">
@@ -631,7 +632,7 @@ export const HabitGrid: React.FC<HabitGridProps> = ({
                   className={`text-center py-12 font-mono text-xs ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}
                 >
                   <p className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>No habits configured</p>
-                  <p className={`mb-3 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>Add a new task or habit with your chosen clock schedule &amp; avatar.</p>
+                  <p className={`mb-3 ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>Add a new task or habit with your chosen schedule &amp; color tag.</p>
                   <button
                     onClick={onOpenAddModal}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs cursor-pointer shadow-md ${
@@ -671,7 +672,10 @@ export const HabitGrid: React.FC<HabitGridProps> = ({
               isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-slate-50 border-slate-200'
             }`}>
               <div className="flex items-center gap-2 text-sm font-bold">
-                <span className="text-xl">{expiredNotice.habit.avatar}</span>
+                <span 
+                  className="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs border border-white/20" 
+                  style={{ backgroundColor: expiredNotice.habit.color || '#10b981' }} 
+                />
                 <span>{expiredNotice.habit.name}</span>
               </div>
 
@@ -733,7 +737,10 @@ export const HabitGrid: React.FC<HabitGridProps> = ({
               isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-slate-50 border-slate-200'
             }`}>
               <div className="flex items-center gap-2 text-sm font-bold">
-                <span className="text-xl">{upcomingNotice.habit.avatar}</span>
+                <span 
+                  className="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs border border-white/20" 
+                  style={{ backgroundColor: upcomingNotice.habit.color || '#10b981' }} 
+                />
                 <span>{upcomingNotice.habit.name}</span>
               </div>
 

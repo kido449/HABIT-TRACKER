@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Habit } from '../types/tracker';
 import { useTheme } from '../context/ThemeContext';
-import { X, Plus, Check, Clock, Timer, ShieldAlert, Trash2, ArrowRight } from 'lucide-react';
+import { X, Check, Clock, Timer, ShieldAlert, Trash2, ArrowRight, Bell, Palette } from 'lucide-react';
 import { getHabitScheduleDetails } from '../utils/timeWindow';
 
 interface AddHabitModalProps {
@@ -12,29 +12,67 @@ interface AddHabitModalProps {
   initialHabit?: Habit | null;
 }
 
-const HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-const MINUTES = [0, 15, 30, 45];
-const DURATION_PRESETS = [30, 60, 90, 120, 150, 180];
+const DURATION_PRESETS = [30, 45, 60, 90, 120, 180];
 const GRACE_OPTIONS = [10, 15, 20, 30];
 
-const AVATAR_OPTIONS = [
-  // Fitness
-  '🏋️', '🏃', '🚴', '🧘', '🥊', '🏊', '🚶', '🤸',
-  // Productivity & Focus
-  '💻', '📚', '✍️', '🎯', '🧠', '💼', '📈', '⏱️',
-  // Health & Body
-  '💧', '🥗', '🍎', '😴', '🚿', '🍵', '💊', '🌿',
-  // Lifestyle & Routine
-  '🌅', '⚡', '🪴', '🐕', '🎸', '🎨', '🧹', '✨',
+export const HABIT_COLOR_PALETTE = [
+  { name: 'Emerald', hex: '#10b981' },
+  { name: 'Teal', hex: '#14b8a6' },
+  { name: 'Cyan', hex: '#06b6d4' },
+  { name: 'Sky', hex: '#0ea5e9' },
+  { name: 'Blue', hex: '#3b82f6' },
+  { name: 'Indigo', hex: '#6366f1' },
+  { name: 'Violet', hex: '#8b5cf6' },
+  { name: 'Purple', hex: '#a855f7' },
+  { name: 'Fuchsia', hex: '#d946ef' },
+  { name: 'Pink', hex: '#ec4899' },
+  { name: 'Rose', hex: '#f43f5e' },
+  { name: 'Red', hex: '#ef4444' },
+  { name: 'Orange', hex: '#f97316' },
+  { name: 'Amber', hex: '#f59e0b' },
+  { name: 'Yellow', hex: '#eab308' },
+  { name: 'Lime', hex: '#84cc16' },
 ];
 
 const QUICK_SUGGESTIONS = [
-  { name: 'Gym Workout', hour: 4, minute: 0, ampm: 'AM' as const, duration: 60, avatar: '🏋️' },
-  { name: 'Morning Wakeup & Hydrate', hour: 5, minute: 0, ampm: 'AM' as const, duration: 30, avatar: '🌅' },
-  { name: 'Deep Work Session', hour: 9, minute: 0, ampm: 'AM' as const, duration: 90, avatar: '💻' },
-  { name: 'Reading & Learning', hour: 8, minute: 0, ampm: 'PM' as const, duration: 30, avatar: '📚' },
-  { name: 'Evening Meditation', hour: 9, minute: 30, ampm: 'PM' as const, duration: 30, avatar: '🧘' },
+  { name: 'Gym Workout', hour: 6, minute: 0, ampm: 'AM' as const, duration: 60, color: '#f97316' },
+  { name: 'Morning Hydrate & Routine', hour: 6, minute: 30, ampm: 'AM' as const, duration: 30, color: '#06b6d4' },
+  { name: 'Deep Work Session', hour: 9, minute: 0, ampm: 'AM' as const, duration: 90, color: '#6366f1' },
+  { name: 'Reading & Learning', hour: 8, minute: 0, ampm: 'PM' as const, duration: 30, color: '#8b5cf6' },
+  { name: 'Evening Meditation', hour: 9, minute: 30, ampm: 'PM' as const, duration: 30, color: '#10b981' },
 ];
+
+const ALARM_PRESETS = [
+  { label: '06:00 AM', hour: 6, minute: 0, ampm: 'AM' as const },
+  { label: '07:00 AM', hour: 7, minute: 0, ampm: 'AM' as const },
+  { label: '08:00 AM', hour: 8, minute: 0, ampm: 'AM' as const },
+  { label: '09:00 AM', hour: 9, minute: 0, ampm: 'AM' as const },
+  { label: '12:00 PM', hour: 12, minute: 0, ampm: 'PM' as const },
+  { label: '05:00 PM', hour: 5, minute: 0, ampm: 'PM' as const },
+  { label: '07:30 PM', hour: 7, minute: 30, ampm: 'PM' as const },
+  { label: '09:00 PM', hour: 9, minute: 0, ampm: 'PM' as const },
+];
+
+// Helper to convert 12-hour values into 24-hour "HH:mm" for <input type="time">
+function to24HourStr(hour12: number, minute: number, ampm: 'AM' | 'PM'): string {
+  let h24 = hour12 % 12;
+  if (ampm === 'PM') h24 += 12;
+  const hStr = h24.toString().padStart(2, '0');
+  const mStr = minute.toString().padStart(2, '0');
+  return `${hStr}:${mStr}`;
+}
+
+// Helper to parse 24-hour "HH:mm" string back to 12-hour components
+function from24HourStr(timeStr: string): { hour: number; minute: number; ampm: 'AM' | 'PM' } {
+  if (!timeStr) return { hour: 6, minute: 0, ampm: 'AM' };
+  const [hStr, mStr] = timeStr.split(':');
+  const h24 = parseInt(hStr, 10) || 0;
+  const minute = parseInt(mStr, 10) || 0;
+  const ampm: 'AM' | 'PM' = h24 >= 12 ? 'PM' : 'AM';
+  let hour = h24 % 12;
+  if (hour === 0) hour = 12;
+  return { hour, minute, ampm };
+}
 
 export const AddHabitModal: React.FC<AddHabitModalProps> = ({
   isOpen,
@@ -47,31 +85,31 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
   const isDark = theme === 'dark';
 
   const [name, setName] = useState('');
-  const [startHour, setStartHour] = useState<number>(4);
+  const [startHour, setStartHour] = useState<number>(6);
   const [startMinute, setStartMinute] = useState<number>(0);
   const [startAmPm, setStartAmPm] = useState<'AM' | 'PM'>('AM');
   const [durationMinutes, setDurationMinutes] = useState<number>(60);
   const [graceMinutes, setGraceMinutes] = useState<number>(15);
-  const [avatar, setAvatar] = useState<string>('🏋️');
+  const [color, setColor] = useState<string>('#10b981');
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (initialHabit) {
       setName(initialHabit.name || '');
-      setStartHour(initialHabit.startHour || 5);
+      setStartHour(initialHabit.startHour || 6);
       setStartMinute(initialHabit.startMinute || 0);
       setStartAmPm(initialHabit.startAmPm || 'AM');
       setDurationMinutes(initialHabit.durationMinutes || 60);
       setGraceMinutes(initialHabit.graceMinutes || 15);
-      setAvatar(initialHabit.avatar || '🏋️');
+      setColor(initialHabit.color || '#10b981');
     } else {
       setName('');
-      setStartHour(4);
+      setStartHour(6);
       setStartMinute(0);
       setStartAmPm('AM');
       setDurationMinutes(60);
       setGraceMinutes(15);
-      setAvatar('🏋️');
+      setColor('#10b981');
     }
     setError('');
   }, [initialHabit, isOpen]);
@@ -89,7 +127,7 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
     startAmPm,
     durationMinutes,
     graceMinutes,
-    avatar,
+    color,
     createdAt: Date.now(),
   };
 
@@ -100,7 +138,7 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
   };
 
   const handleDurationSub30 = () => {
-    setDurationMinutes((prev) => Math.max(prev - 30, 30));
+    setDurationMinutes((prev) => Math.max(prev - 30, 15));
   };
 
   const applySuggestion = (s: typeof QUICK_SUGGESTIONS[0]) => {
@@ -109,7 +147,16 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
     setStartMinute(s.minute);
     setStartAmPm(s.ampm);
     setDurationMinutes(s.duration);
-    setAvatar(s.avatar);
+    setColor(s.color);
+  };
+
+  const handleTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value) {
+      const parsed = from24HourStr(e.target.value);
+      setStartHour(parsed.hour);
+      setStartMinute(parsed.minute);
+      setStartAmPm(parsed.ampm);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -129,7 +176,7 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
         startAmPm,
         durationMinutes,
         graceMinutes,
-        avatar,
+        color,
       },
       initialHabit?.id
     );
@@ -160,15 +207,16 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
           }`}
         >
           <div className="flex items-center gap-2.5">
-            <span className="text-2xl p-1 rounded-lg bg-neutral-500/10 border border-neutral-500/20">
-              {avatar}
-            </span>
+            <span
+              className="w-6 h-6 rounded-full shrink-0 shadow-md border-2 border-white/30"
+              style={{ backgroundColor: color }}
+            />
             <div>
               <h2 className={`text-base font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                {initialHabit ? 'Edit Habit & Schedule' : 'New Habit with Real-Time Window'}
+                {initialHabit ? 'Edit Habit & Schedule' : 'New Habit / Task'}
               </h2>
               <p className={`text-xs ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
-                Select clock time, duration, avatar, and tick grace window.
+                Set alarm time, duration, and color tag.
               </p>
             </div>
           </div>
@@ -186,7 +234,7 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4.5 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
           {error && (
             <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-medium">
               {error}
@@ -196,9 +244,11 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
           {/* Quick Suggestions */}
           {!initialHabit && (
             <div>
-              <label className={`text-[10px] font-mono uppercase font-semibold mb-1.5 block ${
-                isDark ? 'text-neutral-400' : 'text-slate-500'
-              }`}>
+              <label
+                className={`text-[10px] font-mono uppercase font-semibold mb-1.5 block ${
+                  isDark ? 'text-neutral-400' : 'text-slate-500'
+                }`}
+              >
                 Quick Templates
               </label>
               <div className="flex flex-wrap gap-1.5">
@@ -213,7 +263,10 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
                         : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700 hover:text-slate-900'
                     }`}
                   >
-                    <span>{s.avatar}</span>
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: s.color }}
+                    />
                     <span>{s.name}</span>
                   </button>
                 ))}
@@ -223,7 +276,11 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
 
           {/* Habit Name */}
           <div className="space-y-1">
-            <label className={`text-xs font-mono uppercase font-semibold ${isDark ? 'text-neutral-300' : 'text-slate-700'}`}>
+            <label
+              className={`text-xs font-mono uppercase font-semibold ${
+                isDark ? 'text-neutral-300' : 'text-slate-700'
+              }`}
+            >
               Habit / Task Name *
             </label>
             <input
@@ -240,58 +297,91 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
             />
           </div>
 
-          {/* Avatar Selector (Replacing Color Action) */}
+          {/* Color Selector */}
           <div className="space-y-1.5">
-            <label className={`text-xs font-mono uppercase font-semibold flex items-center justify-between ${
-              isDark ? 'text-neutral-300' : 'text-slate-700'
-            }`}>
-              <span>Choose Habit Avatar</span>
-              <span className="text-[11px] font-normal text-neutral-400 font-sans">
-                Selected: <strong className="text-base">{avatar}</strong>
+            <label
+              className={`text-xs font-mono uppercase font-semibold flex items-center justify-between ${
+                isDark ? 'text-neutral-300' : 'text-slate-700'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-emerald-400" />
+                Select Color Tag
+              </span>
+              <span className="text-[11px] font-normal text-neutral-400 font-sans flex items-center gap-1.5">
+                Selected:
+                <span
+                  className="w-3.5 h-3.5 rounded-full inline-block border border-white/30"
+                  style={{ backgroundColor: color }}
+                />
               </span>
             </label>
-            <div className={`p-2.5 rounded-xl border grid grid-cols-8 gap-2 ${
-              isDark ? 'bg-[#161619] border-neutral-800' : 'bg-slate-50 border-slate-200'
-            }`}>
-              {AVATAR_OPTIONS.map((av) => (
+            <div
+              className={`p-3 rounded-xl border grid grid-cols-8 gap-2.5 ${
+                isDark ? 'bg-[#161619] border-neutral-800' : 'bg-slate-50 border-slate-200'
+              }`}
+            >
+              {HABIT_COLOR_PALETTE.map((c) => (
                 <button
-                  key={av}
+                  key={c.hex}
                   type="button"
-                  onClick={() => setAvatar(av)}
-                  className={`h-9 rounded-lg text-lg flex items-center justify-center transition-all cursor-pointer ${
-                    avatar === av
-                      ? isDark
-                        ? 'bg-neutral-700 border-2 border-emerald-400 scale-110 shadow-sm'
-                        : 'bg-white border-2 border-emerald-600 shadow-sm scale-110'
-                      : isDark
-                      ? 'hover:bg-neutral-800/80'
-                      : 'hover:bg-slate-200/70'
+                  title={c.name}
+                  onClick={() => setColor(c.hex)}
+                  className={`h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer relative shadow-sm ${
+                    color === c.hex
+                      ? 'scale-110 ring-2 ring-white ring-offset-2 ring-offset-black/50'
+                      : 'hover:scale-105 opacity-85 hover:opacity-100'
                   }`}
+                  style={{ backgroundColor: c.hex }}
                 >
-                  {av}
+                  {color === c.hex && <Check className="w-4 h-4 text-white stroke-[3] drop-shadow-md" />}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Clock Time Selector (No typing, purely click-to-select) */}
-          <div className={`p-3.5 rounded-xl border space-y-3 ${
-            isDark ? 'bg-[#161619] border-neutral-800' : 'bg-slate-50 border-slate-200'
-          }`}>
+          {/* Alarm-Style Time Picker */}
+          <div
+            className={`p-4 rounded-xl border space-y-3 ${
+              isDark ? 'bg-[#161619] border-neutral-800' : 'bg-slate-50 border-slate-200'
+            }`}
+          >
             <div className="flex items-center justify-between">
-              <label className={`text-xs font-mono uppercase font-semibold flex items-center gap-1.5 ${
-                isDark ? 'text-neutral-200' : 'text-slate-800'
-              }`}>
-                <Clock className="w-3.5 h-3.5 text-emerald-500" />
-                Select Start Time (Clock)
+              <label
+                className={`text-xs font-mono uppercase font-semibold flex items-center gap-1.5 ${
+                  isDark ? 'text-neutral-200' : 'text-slate-800'
+                }`}
+              >
+                <Bell className="w-3.5 h-3.5 text-amber-400" />
+                Alarm / Start Time
               </label>
 
+              <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                {schedule.startTimeStr}
+              </span>
+            </div>
+
+            {/* Direct Alarm Time Input & AM/PM Switcher */}
+            <div className="flex items-center gap-2.5">
+              <div className="relative flex-1">
+                <input
+                  type="time"
+                  value={to24HourStr(startHour, startMinute, startAmPm)}
+                  onChange={handleTimeInputChange}
+                  className={`w-full text-xl font-mono font-bold tracking-wider px-3.5 py-2 rounded-xl border focus:outline-none transition-colors cursor-pointer ${
+                    isDark
+                      ? 'bg-[#1a1a1f] border-neutral-700 text-white focus:border-emerald-400'
+                      : 'bg-white border-slate-300 text-slate-900 focus:border-emerald-600 shadow-xs'
+                  }`}
+                />
+              </div>
+
               {/* AM / PM Toggle */}
-              <div className="flex items-center rounded-lg p-0.5 border border-neutral-700 bg-neutral-900/60">
+              <div className="flex items-center rounded-xl p-1 border border-neutral-700/80 bg-neutral-900/80 shrink-0">
                 <button
                   type="button"
                   onClick={() => setStartAmPm('AM')}
-                  className={`px-2.5 py-0.5 text-xs font-bold rounded-md transition-colors cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                     startAmPm === 'AM'
                       ? 'bg-emerald-500 text-black shadow-xs'
                       : 'text-neutral-400 hover:text-white'
@@ -302,7 +392,7 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setStartAmPm('PM')}
-                  className={`px-2.5 py-0.5 text-xs font-bold rounded-md transition-colors cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                     startAmPm === 'PM'
                       ? 'bg-emerald-500 text-black shadow-xs'
                       : 'text-neutral-400 hover:text-white'
@@ -313,67 +403,60 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
               </div>
             </div>
 
-            {/* Hour Chips (1 to 12) */}
+            {/* Alarm Presets */}
             <div>
-              <span className={`text-[10px] font-mono uppercase block mb-1 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
-                Hour: <strong className="text-emerald-400 text-xs">{startHour}</strong>
+              <span
+                className={`text-[10px] font-mono uppercase block mb-1.5 ${
+                  isDark ? 'text-neutral-400' : 'text-slate-500'
+                }`}
+              >
+                Quick Alarm Presets
               </span>
-              <div className="grid grid-cols-6 gap-1.5">
-                {HOURS.map((h) => (
-                  <button
-                    key={h}
-                    type="button"
-                    onClick={() => setStartHour(h)}
-                    className={`py-1 rounded-md text-xs font-mono font-semibold transition-colors cursor-pointer ${
-                      startHour === h
-                        ? 'bg-emerald-500 text-black font-bold'
-                        : isDark
-                        ? 'bg-neutral-800/80 text-neutral-300 hover:bg-neutral-700'
-                        : 'bg-white border border-slate-200 text-slate-800 hover:bg-slate-100'
-                    }`}
-                  >
-                    {h < 10 ? `0${h}` : h}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Minute Chips (00, 15, 30, 45) */}
-            <div>
-              <span className={`text-[10px] font-mono uppercase block mb-1 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
-                Minute: <strong className="text-emerald-400 text-xs">:{startMinute < 10 ? `0${startMinute}` : startMinute}</strong>
-              </span>
-              <div className="grid grid-cols-4 gap-2">
-                {MINUTES.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setStartMinute(m)}
-                    className={`py-1 rounded-md text-xs font-mono font-semibold transition-colors cursor-pointer ${
-                      startMinute === m
-                        ? 'bg-emerald-500 text-black font-bold'
-                        : isDark
-                        ? 'bg-neutral-800/80 text-neutral-300 hover:bg-neutral-700'
-                        : 'bg-white border border-slate-200 text-slate-800 hover:bg-slate-100'
-                    }`}
-                  >
-                    :{m < 10 ? `0${m}` : m}
-                  </button>
-                ))}
+              <div className="grid grid-cols-4 gap-1.5">
+                {ALARM_PRESETS.map((preset) => {
+                  const isSelected =
+                    startHour === preset.hour &&
+                    startMinute === preset.minute &&
+                    startAmPm === preset.ampm;
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => {
+                        setStartHour(preset.hour);
+                        setStartMinute(preset.minute);
+                        setStartAmPm(preset.ampm);
+                      }}
+                      className={`py-1 px-1.5 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer border ${
+                        isSelected
+                          ? 'bg-emerald-500 text-black border-emerald-400 font-bold shadow-xs'
+                          : isDark
+                          ? 'bg-neutral-800/80 border-neutral-700/60 text-neutral-300 hover:bg-neutral-700'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* Duration Selector (30m increments) */}
-          <div className={`p-3.5 rounded-xl border space-y-2.5 ${
-            isDark ? 'bg-[#161619] border-neutral-800' : 'bg-slate-50 border-slate-200'
-          }`}>
+          {/* Duration Selector */}
+          <div
+            className={`p-3.5 rounded-xl border space-y-2.5 ${
+              isDark ? 'bg-[#161619] border-neutral-800' : 'bg-slate-50 border-slate-200'
+            }`}
+          >
             <div className="flex items-center justify-between">
-              <label className={`text-xs font-mono uppercase font-semibold flex items-center gap-1.5 ${
-                isDark ? 'text-neutral-200' : 'text-slate-800'
-              }`}>
+              <label
+                className={`text-xs font-mono uppercase font-semibold flex items-center gap-1.5 ${
+                  isDark ? 'text-neutral-200' : 'text-slate-800'
+                }`}
+              >
                 <Timer className="w-3.5 h-3.5 text-sky-400" />
-                Duration: <span className="text-sky-400 font-bold">{durationMinutes} mins</span> ({durationMinutes / 60 >= 1 ? `${Math.floor(durationMinutes / 60)}h ` : ''}{durationMinutes % 60 ? `${durationMinutes % 60}m` : ''})
+                Duration: <span className="text-sky-400 font-bold">{durationMinutes} mins</span>
               </label>
 
               <div className="flex items-center gap-1.5">
@@ -381,7 +464,9 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
                   type="button"
                   onClick={handleDurationSub30}
                   className={`px-2 py-0.5 rounded text-xs font-bold border transition-colors cursor-pointer ${
-                    isDark ? 'bg-neutral-800 border-neutral-700 text-neutral-200 hover:bg-neutral-700' : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-100'
+                    isDark
+                      ? 'bg-neutral-800 border-neutral-700 text-neutral-200 hover:bg-neutral-700'
+                      : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
                   -30m
@@ -390,7 +475,9 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
                   type="button"
                   onClick={handleDurationAdd30}
                   className={`px-2 py-0.5 rounded text-xs font-bold border transition-colors cursor-pointer ${
-                    isDark ? 'bg-neutral-800 border-neutral-700 text-neutral-200 hover:bg-neutral-700' : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-100'
+                    isDark
+                      ? 'bg-neutral-800 border-neutral-700 text-neutral-200 hover:bg-neutral-700'
+                      : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-100'
                   }`}
                 >
                   +30m
@@ -398,7 +485,7 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
               </div>
             </div>
 
-            {/* Presets: 30, 60, 90, 120, 150, 180 */}
+            {/* Presets: 30, 45, 60, 90, 120, 180 */}
             <div className="grid grid-cols-6 gap-1.5">
               {DURATION_PRESETS.map((dur) => (
                 <button
@@ -407,7 +494,7 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
                   onClick={() => setDurationMinutes(dur)}
                   className={`py-1 rounded-md text-xs font-mono font-semibold transition-colors cursor-pointer ${
                     durationMinutes === dur
-                      ? 'bg-sky-500 text-black font-bold'
+                      ? 'bg-sky-500 text-black font-bold shadow-xs'
                       : isDark
                       ? 'bg-neutral-800/80 text-neutral-300 hover:bg-neutral-700'
                       : 'bg-white border border-slate-200 text-slate-800 hover:bg-slate-100'
@@ -419,26 +506,26 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
             </div>
           </div>
 
-          {/* Check-In Grace Window & Auto-Expiration Rule */}
-          <div className={`p-3.5 rounded-xl border space-y-2.5 ${
-            isDark ? 'bg-[#161619] border-neutral-800' : 'bg-slate-50 border-slate-200'
-          }`}>
+          {/* Check-In Grace Window */}
+          <div
+            className={`p-3.5 rounded-xl border space-y-2.5 ${
+              isDark ? 'bg-[#161619] border-neutral-800' : 'bg-slate-50 border-slate-200'
+            }`}
+          >
             <div className="flex items-center justify-between">
-              <label className={`text-xs font-mono uppercase font-semibold flex items-center gap-1.5 ${
-                isDark ? 'text-neutral-200' : 'text-slate-800'
-              }`}>
+              <label
+                className={`text-xs font-mono uppercase font-semibold flex items-center gap-1.5 ${
+                  isDark ? 'text-neutral-200' : 'text-slate-800'
+                }`}
+              >
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-                Check-in Grace Period (Post-Task)
+                Check-in Grace Period
               </label>
 
               <span className="text-xs font-mono font-bold text-amber-400">
                 {graceMinutes} minutes
               </span>
             </div>
-
-            <p className={`text-[11px] leading-relaxed ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>
-              After the task ends, you get a window of {graceMinutes} minutes to check it off. If missed, it locks as <span className="text-rose-400 font-semibold">✕ Expired / Undone</span>.
-            </p>
 
             <div className="grid grid-cols-4 gap-2">
               {GRACE_OPTIONS.map((g) => (
@@ -460,34 +547,35 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
             </div>
           </div>
 
-          {/* Real-time Schedule Breakdown Preview */}
-          <div className={`p-3 rounded-xl border flex flex-col gap-1.5 ${
-            isDark ? 'bg-neutral-900/90 border-neutral-800 text-neutral-200' : 'bg-slate-100 border-slate-200 text-slate-800'
-          }`}>
+          {/* Schedule Breakdown Summary */}
+          <div
+            className={`p-3 rounded-xl border flex flex-col gap-1.5 ${
+              isDark
+                ? 'bg-neutral-900/90 border-neutral-800 text-neutral-200'
+                : 'bg-slate-100 border-slate-200 text-slate-800'
+            }`}
+          >
             <div className="text-[10px] font-mono uppercase font-bold text-neutral-400">
-              Live Window Summary:
+              Schedule Summary:
             </div>
             <div className="flex items-center gap-2 text-xs flex-wrap">
-              <span className="font-semibold text-emerald-400">
-                {schedule.startTimeStr}
-              </span>
+              <span className="font-semibold text-emerald-400">{schedule.startTimeStr}</span>
               <ArrowRight className="w-3 h-3 text-neutral-500" />
-              <span className="font-semibold text-sky-400">
-                {schedule.endTimeStr}
-              </span>
-              <span className="text-neutral-500 text-[11px]">({durationMinutes}m task)</span>
+              <span className="font-semibold text-sky-400">{schedule.endTimeStr}</span>
+              <span className="text-neutral-500 text-[11px]">({durationMinutes}m duration)</span>
             </div>
             <div className="text-[11px] flex items-center gap-1.5 text-amber-300/90">
-              <span>⏳ Tick Window:</span>
+              <span>⏳ Check-in Window:</span>
               <span className="font-mono font-bold">{schedule.windowStr}</span>
-              <span className="text-[10px] text-neutral-400">({graceMinutes}m to tick)</span>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className={`pt-3 border-t flex items-center justify-between ${
-            isDark ? 'border-neutral-800' : 'border-slate-200'
-          }`}>
+          <div
+            className={`pt-3 border-t flex items-center justify-between ${
+              isDark ? 'border-neutral-800' : 'border-slate-200'
+            }`}
+          >
             {initialHabit && onDelete ? (
               <button
                 type="button"

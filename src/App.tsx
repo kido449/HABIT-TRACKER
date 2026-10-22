@@ -146,7 +146,7 @@ export default function App() {
 
       const habit = habits.find((h) => h.id === habitId);
       if (!currentlyChecked) {
-        showToast(`Checked in: ${habit?.avatar || '✓'} ${habit?.name || 'Habit'} (Day ${dayNumber})`);
+        showToast(`Checked in: ✓ ${habit?.name || 'Habit'} (Day ${dayNumber})`);
 
         const allCompleted = habits.length > 0 && habits.every((h) => {
           if (h.id === habitId) return true;

@@ -168,10 +168,11 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
                     </button>
                   </div>
 
-                  {/* Avatar Icon */}
-                  <span className="text-xl w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-neutral-500/10 border border-neutral-500/20">
-                    {habit.avatar || '🎯'}
-                  </span>
+                  {/* Color Tag Badge */}
+                  <span
+                    className="w-5 h-5 rounded-full shrink-0 shadow-sm border border-white/20"
+                    style={{ backgroundColor: habit.color || '#10b981' }}
+                  />
 
                   {/* Name (Inline editable or static) */}
                   <div className="min-w-0 flex-1">
@@ -246,7 +247,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
                       onClose();
                       onEditHabit(habit);
                     }}
-                    title="Edit clock time, duration, avatar, and grace window"
+                    title="Edit clock time, duration, color, and grace window"
                     className={`p-2 rounded-lg border text-xs flex items-center gap-1 transition-colors cursor-pointer ${
                       isDark 
                         ? 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 text-neutral-300 hover:text-white' 

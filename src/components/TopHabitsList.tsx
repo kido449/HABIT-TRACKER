@@ -120,7 +120,10 @@ export const TopHabitsList: React.FC<TopHabitsListProps> = ({ analytics }) => {
               {/* Left: Rank & Habit Title */}
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <div className="shrink-0">{getRankBadge(rank)}</div>
-                <span className="text-base shrink-0">{item.habit.avatar || '🎯'}</span>
+                <span 
+                  className="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs border border-white/20" 
+                  style={{ backgroundColor: item.habit.color || '#10b981' }} 
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className={`font-semibold text-xs truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>

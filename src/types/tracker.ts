@@ -8,7 +8,8 @@ export interface Habit {
   startAmPm: 'AM' | 'PM';
   durationMinutes: number; // 30, 60, 90, 120, etc.
   graceMinutes: number; // e.g. 15 minutes window after task end time to check in
-  avatar: string; // Emoji avatar e.g. "🏋️‍♂️", "📚", "🧘", "💻"
+  color: string; // Hex color e.g. "#10b981", "#3b82f6"
+  avatar?: string; // Optional legacy avatar for backwards compatibility
   category?: string; // e.g., "Health", "Fitness", "Deep Work"
   createdAt: number;
 }
