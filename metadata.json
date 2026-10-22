@@ -1,0 +1,6 @@
+{
+  "name": "Habit & Task Tracker Dashboard",
+  "description": "Dark-mode, spreadsheet-style habit and task tracker dashboard with real-time analytics, daily progress, and dynamic calendar grid.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

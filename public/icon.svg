@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#10b981" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  
+  <!-- Outer Border Ring -->
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="none" stroke="#334155" stroke-width="6" opacity="0.6"/>
+
+  <!-- Calendar / Ledger Header Banner -->
+  <rect x="88" y="96" width="336" height="64" rx="20" fill="#1e293b"/>
+  <circle cx="152" cy="128" r="10" fill="#10b981"/>
+  <circle cx="192" cy="128" r="10" fill="#38bdf8"/>
+  <circle cx="232" cy="128" r="10" fill="#a855f7"/>
+
+  <!-- Calendar / Spreadsheet Grid Body -->
+  <rect x="88" y="180" width="336" height="236" rx="24" fill="#0b1120" stroke="#334155" stroke-width="4"/>
+
+  <!-- Grid Rows & Cells -->
+  <!-- Row 1 -->
+  <rect x="116" y="208" width="52" height="42" rx="8" fill="#1e293b" opacity="0.7"/>
+  <rect x="184" y="208" width="52" height="42" rx="8" fill="url(#accent)" opacity="0.9"/>
+  <path d="M198 229 l8 8 l16 -16" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="252" y="208" width="52" height="42" rx="8" fill="url(#accent)" opacity="0.9"/>
+  <path d="M266 229 l8 8 l16 -16" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="320" y="208" width="76" height="42" rx="8" fill="#1e293b" opacity="0.7"/>
+
+  <!-- Row 2 -->
+  <rect x="116" y="266" width="52" height="42" rx="8" fill="url(#accent)" opacity="0.9"/>
+  <path d="M130 287 l8 8 l16 -16" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="184" y="266" width="52" height="42" rx="8" fill="#1e293b" opacity="0.7"/>
+  <rect x="252" y="266" width="52" height="42" rx="8" fill="url(#accent)" opacity="0.9"/>
+  <path d="M266 287 l8 8 l16 -16" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="320" y="266" width="76" height="42" rx="8" fill="#1e293b" opacity="0.7"/>
+
+  <!-- Row 3 -->
+  <rect x="116" y="324" width="52" height="42" rx="8" fill="url(#accent)" opacity="0.9"/>
+  <path d="M130 345 l8 8 l16 -16" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="184" y="324" width="52" height="42" rx="8" fill="url(#accent)" opacity="0.9"/>
+  <path d="M198 345 l8 8 l16 -16" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="252" y="324" width="52" height="42" rx="8" fill="url(#accent)" opacity="0.9"/>
+  <path d="M266 345 l8 8 l16 -16" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="320" y="324" width="76" height="42" rx="8" fill="#10b981" fill-opacity="0.2"/>
+
+  <!-- Prominent Central Checkmark Floating Badge -->
+  <circle cx="364" cy="350" r="54" fill="url(#accent)" filter="url(#glow)"/>
+  <path d="M344 350 l14 14 l28 -30" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
